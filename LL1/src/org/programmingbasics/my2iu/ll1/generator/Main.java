@@ -154,13 +154,20 @@ public class Main
   {
     String topOfStack = parsingStack.get(parsingStack.size() - 1);
     List<String> options = new ArrayList<String>(parsingTable.get(topOfStack).keySet());
+    List<Integer> validOptions = new ArrayList<Integer>();
     System.out.println(topOfStack);
     for (int n = 0; n < options.size(); n++) {
       // Some expansions aren't legal. Do a speculative parse to see if 
       // the given parse is legal or not.
       if (speculativeParse(parsingStack, options.get(n)))
-        System.out.println("  " + n + " " + options.get(n));
+        validOptions.add(n);
     }
+    if (validOptions.size() == 1)
+    {
+      return options.get(validOptions.get(0));
+    }
+    for (int validOption: validOptions)
+      System.out.println("  " + validOption + " " + options.get(validOption));
     String line = in.readLine();
     int choice = Integer.parseInt(line);
     return options.get(choice);

@@ -32,3 +32,189 @@ SourceElements :
 SourceElement :
 	Statement
 	FunctionDeclaration
+	
+# A.4 Statements
+Statement :
+	Block
+	VariableStatement
+	EmptyStatement
+	ExpressionStatement
+	IfStatement
+	IterationStatement
+	ContinueStatement
+	BreakStatement
+	ReturnStatement
+	WithStatement
+	LabelledStatement
+	SwitchStatement
+	ThrowStatement
+	TryStatement
+	DebuggerStatement
+
+Block :
+	"{" Block_More
+
+Block_More :
+	StatementList? "}"
+
+StatementList :
+	Statement StatementList_More
+	
+StatementList_More :
+	Statement StatementList_More
+	EPSILON
+
+VariableStatement :
+	"var" VariableDeclarationList ";"
+
+VariableDeclarationList :
+	VariableDeclaration VariableDeclarationList_More
+	
+VariableDeclarationList_More :	
+	"," VariableDeclaration VariableDeclarationList_More
+	EPSILON
+
+VariableDeclarationListNoIn :
+	VariableDeclarationNoIn VariableDeclarationListNoIn_More
+
+VariableDeclarationListNoIn_More :
+	"," VariableDeclarationNoIn VariableDeclarationListNoIn_More
+	EPSILON
+
+VariableDeclaration :
+	Identifier VariableDeclaration_Initialiser
+
+VariableDeclaration_Initialiser :
+	Initialiser?
+
+VariableDeclarationNoIn :
+	Identifier VariableDeclarationNoIn_Initialiser
+
+VariableDeclarationNoIn_Initialiser :
+	InitialiserNoIn?
+	
+Initialiser :
+	"=" AssignmentExpression
+
+InitialiserNoIn :
+	"=" AssignmentExpressionNoIn
+
+EmptyStatement :
+	";"
+
+ExpressionStatement :
+	Expression ";"
+#	[lookahead ∉ {{, function}] Expression ;
+
+IfStatement :
+	"if" "(" Expression ")" "{" Statement "}" IfStatement_Else 
+
+IfStatement_Else :
+	"else" "{" Statement "}"
+	EPSILON
+	
+IterationStatement :
+	"do" Statement "while" "(" Expression ");"
+	"while" "(" Expression ")" Statement
+	"for" "(" IterationStatement_For
+	"for...in" "(" IterationStatement_ForIn
+
+IterationStatement_For :
+	ExpressionNoIn? ";" IterationStatement_ForExpression2
+	"var" VariableDeclarationListNoIn ";" 
+
+IterationStatement_ForExpression2 :
+	Expression? ";" IterationStatement_ForExpression3
+
+IterationStatement_ForExpression3 :
+	Expression? ")" Statement
+	
+IterationStatement_ForIn :
+	LeftHandSideExpression "in" Expression ")" Statement
+	"var" VariableDeclarationNoIn "in" Expression ")" Statement
+
+	
+ContinueStatement :
+	"continue" ContinueStatement_Identifier
+#	continue [no LineTerminator here] Identifier ;
+
+ContinueStatement_Identifier :
+	Identifier ";"
+	";"
+
+BreakStatement :
+	"break" BreakStatement_Identifier
+#	break [no LineTerminator here] Identifier ;
+
+BreakStatement_Identifier :
+	Identifier ";"
+	";"
+
+ReturnStatement :
+	"return" ReturnStatement_Expression
+#	return [no LineTerminator here] Expression ";"
+
+ReturnStatement_Expression :
+	Expression ";"
+	";"
+
+WithStatement :
+	"with" "(" Expression ")" Statement
+
+SwitchStatement :
+	"switch" "(" Expression ")" CaseBlock
+
+CaseBlock :
+	"{" CaseBlock_Clauses "}"
+
+CaseBlock_Clauses :
+	EPSILON
+	DefaultClause CaseBlock_AfterDefaultClause
+	CaseClauses CaseBlock_DefaultClause
+
+CaseBlock_DefaultClause :
+	DefaultClause CaseBlock_AfterDefaultClause
+	EPSILON
+
+CaseBlock_AfterDefaultClause :
+	CaseClauses?
+	
+CaseClauses :
+	CaseClause CaseClauses_More
+
+CaseClauses_More :
+	CaseClause CaseClauses_More
+	EPSILON
+
+CaseClause :
+	"case" Expression ":" StatementListopt
+
+DefaultClause :
+	"default" ":" StatementListopt
+
+LabelledStatement :
+	Identifier ":" Statement
+
+ThrowStatement :
+	"throw" Expression ";"
+#	throw [no LineTerminator here] Expression ;
+
+TryStatement :
+	"try" Block TryStatement_Catch
+
+TryStatement_Catch :
+	Catch TryStatement_Finally
+	Finally
+
+TryStatement_Finally :
+	Finally
+	EPSILON
+	
+Catch :
+	"catch" "(" Identifier ")" Block
+
+Finally :
+	"finally" Block
+
+DebuggerStatement :
+	"debugger" ";"	
