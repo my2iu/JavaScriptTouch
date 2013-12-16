@@ -87,23 +87,83 @@ public class Main
     runInteractiveBuilder();
   }
 
-  private void runInteractiveBuilder()
+  private void runInteractiveBuilder() throws IOException
   {
+    BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+
     List<String> parsingStack = new ArrayList<String>();
     parsingStack.add("Program");
+    String program = "";
     
-    // Show options
-    showOptions(parsingStack.get(parsingStack.size()-1));
+    
+    while (parsingStack.size() > 0)
+    {
+      // Remove terminals from top of stack
+      while (isTerminal(parsingStack.get(parsingStack.size()-1)))
+      {
+        program += " " + parsingStack.get(parsingStack.size()-1);
+        parsingStack.remove(parsingStack.size()-1);
+      }
+
+      System.out.println(program);
+      
+      // Show options and get next token
+      String token = chooseOptions(in, parsingStack);
+      
+      // Parse the token
+      while (isNonTerminal(parsingStack.get(parsingStack.size()-1)))
+      {
+        // Apply the appropriate production
+        parseToken(parsingStack, token);
+      }
+      assert(parsingStack.get(parsingStack.size()-1).equals(token));
+    }
+    in.close();
   }
 
-  private void showOptions(String topOfStack)
+  private boolean speculativeParse(List<String> parsingStack, String token)
   {
-    int n = 0;
-    for (String option: parsingTable.get(topOfStack).keySet())
+    // Copy the stack
+    List<String> stack = new ArrayList<String>();
+    stack.addAll(parsingStack);
+    while (isNonTerminal(stack.get(stack.size()-1)))
     {
-      System.out.println(n + " " + option);
-      n++;
+      // Apply the appropriate production
+      if (!parseToken(stack, token))
+        return false;
+      if (stack.isEmpty())
+        return false;
     }
+    return stack.get(stack.size()-1).equals(token);
+  }
+  
+  private boolean parseToken(List<String> parsingStack, String token)
+  {
+    String topOfStack = parsingStack.get(parsingStack.size()-1);
+    Production p = parsingTable.get(topOfStack).get(token);
+    if (p == null) return false;
+    parsingStack.remove(parsingStack.size()-1);
+    for (int n = p.to.size() - 1; n >= 0; n--)
+    {
+      parsingStack.add(p.to.get(n));
+    }
+    return true;
+  }
+  
+  private String chooseOptions(BufferedReader in, List<String> parsingStack) throws IOException
+  {
+    String topOfStack = parsingStack.get(parsingStack.size() - 1);
+    List<String> options = new ArrayList<String>(parsingTable.get(topOfStack).keySet());
+    System.out.println(topOfStack);
+    for (int n = 0; n < options.size(); n++) {
+      // Some expansions aren't legal. Do a speculative parse to see if 
+      // the given parse is legal or not.
+      if (speculativeParse(parsingStack, options.get(n)))
+        System.out.println("  " + n + " " + options.get(n));
+    }
+    String line = in.readLine();
+    int choice = Integer.parseInt(line);
+    return options.get(choice);
   }
   
   private void printProductions()
