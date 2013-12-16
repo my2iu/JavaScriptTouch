@@ -22,6 +22,8 @@ public class Main
   Map<String, Set<String>> firstTerminals = new HashMap<String, Set<String>>();
   Map<String, Set<String>> followsTerminals = new HashMap<String, Set<String>>();
   Map<String, Map<String, Production>> parsingTable = new HashMap<String, Map<String, Production>>();
+  Map<String, Set<String>> noAcceptTokenException = new HashMap<String, Set<String>>();
+  Set<Production> preferredProduction = new HashSet<Production>();
   
   boolean isNonTerminal(String token)
   {
@@ -55,13 +57,32 @@ public class Main
       if (Character.isWhitespace(line.codePointAt(0)))
       {
         String [] tokens = line.trim().split("[ \t]+");
+        boolean isPreferred = false;
         if (tokens.length == 1 && tokens[0].equals("EPSILON"))
         {
           // Special way to denote expansion to empty string
           grammar.add(new Production(fromNonTerminal, new String[0]));
           continue;
+        } 
+        else if (tokens[0].equals("EXCEPTIION_PEEK_NO_ACCEPT"))
+        {
+          String terminal = tokens[1];
+          if (!noAcceptTokenException.containsKey(fromNonTerminal))
+            noAcceptTokenException.put(fromNonTerminal, new HashSet<String>());
+          noAcceptTokenException.get(fromNonTerminal).add(terminal);
+          continue;
         }
-        grammar.add(new Production(fromNonTerminal, tokens));
+        else if (tokens[0].equals("+"))
+        {
+          isPreferred = true;
+          String [] oldTokens = tokens;
+          tokens = new String[oldTokens.length - 1];
+          System.arraycopy(oldTokens, 1, tokens, 0, tokens.length);
+        }
+        Production p = new Production(fromNonTerminal, tokens); 
+        grammar.add(p);
+        if (isPreferred)
+          preferredProduction.add(p);
         continue;
       }
       
@@ -163,9 +184,7 @@ public class Main
         validOptions.add(n);
     }
     if (validOptions.size() == 1)
-    {
       return options.get(validOptions.get(0));
-    }
     for (int validOption: validOptions)
       System.out.println("  " + validOption + " " + options.get(validOption));
     String line = in.readLine();
@@ -187,8 +206,23 @@ public class Main
       }
       System.out.println();
     }
-    System.out.println(firstTerminals);
-    System.out.println(followsTerminals);
+    printBigMap(firstTerminals);
+    printBigMap(followsTerminals);
+  }
+
+  private void printBigMap(Map<String, Set<String>> map)
+  {
+    System.out.println("{");
+    for (Map.Entry<String, Set<String>> entry: map.entrySet())
+      System.out.println("  " + entry.getKey() + " : " + entry.getValue());
+    System.out.println("}");
+  }
+  
+  private boolean isNoAcceptException(String nonTerminal, String terminal)
+  {
+    if (noAcceptTokenException.containsKey(nonTerminal))
+      return noAcceptTokenException.get(nonTerminal).contains(terminal);
+    return false;
   }
   
   private void createLLParsingTable()
@@ -212,6 +246,7 @@ public class Main
         for (String first : firstTerminals.get(token))
         {
           if (first.equals(EMPTY)) continue;
+//          if (isNoAcceptException(p.from, first)) continue;
           addParsingRule(p.from, first, p);
         }
         if (!firstTerminals.get(token).contains(EMPTY))
@@ -235,6 +270,20 @@ public class Main
   {
     if (parsingTable.get(from).containsKey(token))
     {
+      // We have a conflict. See if we have a preferred rule.
+      if (preferredProduction.contains(parsingTable.get(from).get(token))
+          && !preferredProduction.contains(p)) 
+      {
+        // Existing rule is preferred, go with that.
+        return;
+      }
+      if (!preferredProduction.contains(parsingTable.get(from).get(token))
+          && preferredProduction.contains(p))
+      {
+        // New rule is preferred, replace it.
+        parsingTable.get(from).put(token, p);
+        return;
+      }
       System.err.println("LL parsing conflict with token " + token + " with rules ");
       System.err.println("  " + p);
       System.err.println("  " + parsingTable.get(from).get(token));
@@ -267,7 +316,7 @@ public class Main
           // Terminals are simply added as is.
           if (isTerminal(token))
           {
-            if (!firsts.contains(token))
+            if (!firsts.contains(token) && !isNoAcceptException(p.from, token))
             {
               firsts.add(token);
               isChanged = true;
@@ -276,7 +325,9 @@ public class Main
             break;
           }
           // For non-terminals, we consider them without EMPTY first
-          Set<String> tokenFirsts = firstTerminals.get(token);
+          Set<String> tokenFirsts = new HashSet<String>(firstTerminals.get(token));
+          if (noAcceptTokenException.containsKey(p.from))
+            tokenFirsts.removeAll(noAcceptTokenException.get(p.from));
           boolean hasEmpty = tokenFirsts.contains(EMPTY);
           if (hasEmpty)
           {

@@ -10,7 +10,6 @@ FunctionExpression_IdentifierOption :
 
 FunctionExpression_ParametersOption :
 	FormalParameterList? ")" "{" FunctionBody "}"
-
 	
 FormalParameterList :
 	Identifier FunctionParameterList_More
@@ -104,6 +103,8 @@ EmptyStatement :
 
 ExpressionStatement :
 	Expression ";"
+	EXCEPTIION_PEEK_NO_ACCEPT "function"
+	EXCEPTIION_PEEK_NO_ACCEPT "{"
 #	[lookahead ∉ {{, function}] Expression ;
 
 IfStatement :
@@ -187,13 +188,16 @@ CaseClauses_More :
 	EPSILON
 
 CaseClause :
-	"case" Expression ":" StatementListopt
+	"case" Expression ":" CaseClause_StatementList
 
+CaseClause_StatementList :
+	StatementList?
+	
 DefaultClause :
-	"default" ":" StatementListopt
+	"default" ":" CaseClause_StatementList
 
-LabelledStatement :
-	Identifier ":" Statement
+#LabelledStatement :
+#	Identifier ":" Statement
 
 ThrowStatement :
 	"throw" Expression ";"
@@ -218,3 +222,393 @@ Finally :
 
 DebuggerStatement :
 	"debugger" ";"	
+	
+	
+# A.3 Expressions
+
+PrimaryExpression :
+	"this"
+	Identifier
+	Literal
+	ArrayLiteral
+	ObjectLiteral
+	"(" Expression ")"
+
+ArrayLiteral :
+	"[" ArrayLiteral_More
+
+ArrayLiteral_More :
+	LLElementList "]"
+
+# Custom handling of element lists and elision for Array Literals
+LLElementList :
+	"," LLElementList
+	AssignmentExpression LLElementList_NeedComma
+	EPSILON
+	
+LLElementList_NeedComma :	
+	"," LLElementList
+	EPSILON
+	
+ElementList :
+	Elision? AssignmentExpression ElementList_More
+
+ElementList_More :
+	"," ElementList_MoreElison
+	EPSILON
+
+ElementList_MoreElison :
+	Elision? AssignmentExpression ElementList_More
+
+Elision :
+	"," Elision_More
+
+Elision_More :
+	"," Elision_More
+	EPSILON
+	
+ObjectLiteral :
+	"{" ObjectLiteral_More
+
+ObjectLiteral_More :
+	"}"
+	LLPropertyNameAndValueList "}"
+#	PropertyNameAndValueList ObjectLiteral_PropertyListAfter 
+
+ObjectLiteral_PropertyListAfter :
+	"}"
+	"," "}"
+
+# Special way to denote object literal list so that it accepts the 
+# comma at the end
+LLPropertyNameAndValueList :
+	PropertyAssignment LLPropertyNameAndValueList_More
+
+LLPropertyNameAndValueList_More :
+	"," LLPropertyNameAndValueList_PropertyOrEnd
+	EPSILON
+
+LLPropertyNameAndValueList_PropertyOrEnd :
+	PropertyAssignment LLPropertyNameAndValueList_More
+	EPSILON
+
+PropertyNameAndValueList :
+	PropertyAssignment PropertyNameAndValueList_More
+
+PropertyNameAndValueList_More :
+	"," PropertyAssignment PropertyNameAndValueList_More
+	EPSILON
+
+PropertyAssignment :
+	PropertyName ":" AssignmentExpression
+	"get" PropertyName "(" ")" "{" FunctionBody "}"
+	"set" PropertyName "(" PropertySetParameterList ")" "{" FunctionBody "}"
+
+PropertyName :
+	IdentifierName
+	StringLiteral
+	NumericLiteral
+
+PropertySetParameterList :
+	Identifier
+
+# LeftHandSideExpression includes both a MemberExpression (via NewExpression)
+# and a CallExpression (which begins with a MemberExpression). This merges
+# the two
+LLMemberCallExpression :
+	PrimaryExpression LLMemberCallExpression_More
+	FunctionExpression LLMemberCallExpression_More
+	"new" MemberExpression Arguments LLMemberCallExpression_More
+
+LLMemberCallExpression_More :
+	"[" Expression "]" LLMemberCallExpression_More
+	"." IdentifierName LLMemberCallExpression_More
+	Arguments LLMemberCallExpression_More
+	EPSILON
+
+MemberExpression :
+	PrimaryExpression MemberExpression_More
+	FunctionExpression MemberExpression_More
+	"new" MemberExpression Arguments MemberExpression_More
+
+MemberExpression_More :
+	"[" Expression "]" MemberExpression_More
+	"." IdentifierName MemberExpression_More
+	EPSILON
+	
+NewExpression :
+	MemberExpression
+# I don't understand how you can call a constructor with no arguments.
+# I'm ignoring this possibility for now.	
+#	"new" NewExpression
+
+CallExpression :
+	MemberExpression Arguments CallExpression_More
+
+CallExpression_More :
+	Arguments CallExpression_More
+	"[" Expression "]" CallExpression_More
+	"." IdentifierName CallExpression_More
+	EPSILON
+	
+Arguments :
+	"(" Arguments_More
+
+Arguments_More :
+	")"
+	ArgumentList ")"
+	
+ArgumentList :
+	AssignmentExpression ArgumentList_More
+
+ArgumentList_More :
+	"," AssignmentExpression ArgumentList_More
+	EPSILON
+
+LeftHandSideExpression :
+	LLMemberCallExpression
+#	NewExpression
+#	CallExpression
+
+PostfixExpression :
+	LeftHandSideExpression PostfixExpression_More
+
+PostfixExpression_More :
+	EPSILON
+	"++"
+	"--"
+
+UnaryExpression :
+	PostfixExpression
+	"delete" UnaryExpression
+	"void" UnaryExpression
+	"typeof" UnaryExpression
+	"++" UnaryExpression
+	"--" UnaryExpression
+	"+" UnaryExpression
+	"-" UnaryExpression
+	"~" UnaryExpression
+	"!" UnaryExpression
+
+MultiplicativeExpression :
+	UnaryExpression MultiplicativeExpression_More
+
+MultiplicativeExpression_More :
+	"*" UnaryExpression MultiplicativeExpression_More
+	"/" UnaryExpression MultiplicativeExpression_More
+	"%" UnaryExpression MultiplicativeExpression_More
+	EPSILON
+
+AdditiveExpression :
+	MultiplicativeExpression AdditiveExpression_More
+
+AdditiveExpression_More :
+	"+" MultiplicativeExpression AdditiveExpression_More
+	"-" MultiplicativeExpression AdditiveExpression_More
+	EPSILON
+
+ShiftExpression :
+	AdditiveExpression ShiftExpression_More
+
+ShiftExpression_More :
+	"<<" AdditiveExpression ShiftExpression_More
+	">>" AdditiveExpression ShiftExpression_More
+	">>>" AdditiveExpression ShiftExpression_More
+	EPSILON
+
+RelationalExpression :
+	ShiftExpression RelationalExpression_More
+
+RelationalExpression_More :
+	"<" ShiftExpression RelationalExpression_More
+	">" ShiftExpression RelationalExpression_More
+	"<=" ShiftExpression RelationalExpression_More
+	">=" ShiftExpression RelationalExpression_More
+	"instanceof" ShiftExpression RelationalExpression_More
+	"in" ShiftExpression RelationalExpression_More
+	EPSILON
+
+RelationalExpressionNoIn :
+	ShiftExpression RelationalExpressionNoIn_More
+
+RelationalExpressionNoIn_More :
+	"<" ShiftExpression RelationalExpressionNoIn_More
+	">" ShiftExpression RelationalExpressionNoIn_More
+	"<=" ShiftExpression RelationalExpressionNoIn_More
+	">=" ShiftExpression RelationalExpressionNoIn_More
+	"instanceof" ShiftExpression RelationalExpressionNoIn_More
+	EPSILON
+
+EqualityExpression :
+	RelationalExpression EqualityExpression_More
+
+EqualityExpression_More :
+	"==" RelationalExpression EqualityExpression_More
+	"!=" RelationalExpression EqualityExpression_More
+	"===" RelationalExpression EqualityExpression_More
+	"!==" RelationalExpression EqualityExpression_More
+	EPSILON
+	
+EqualityExpressionNoIn :
+	RelationalExpressionNoIn EqualityExpressionNoIn_More
+
+EqualityExpressionNoIn_More :
+	"==" RelationalExpressionNoIn EqualityExpressionNoIn_More
+	"!=" RelationalExpressionNoIn EqualityExpressionNoIn_More
+	"===" RelationalExpressionNoIn EqualityExpressionNoIn_More
+	"!==" RelationalExpressionNoIn EqualityExpressionNoIn_More
+	EPSILON
+
+BitwiseANDExpression :
+	EqualityExpression BitwiseANDExpression_More
+
+BitwiseANDExpression_More :
+	"&" EqualityExpression BitwiseANDExpression_More
+	EPSILON
+
+BitwiseANDExpressionNoIn :
+	EqualityExpressionNoIn BitwiseANDExpressionNoIn_More
+
+BitwiseANDExpressionNoIn_More :
+	"&" EqualityExpressionNoIn BitwiseANDExpressionNoIn_More
+	EPSILON
+	
+BitwiseXORExpression :
+	BitwiseANDExpression BitwiseXORExpression_More
+
+BitwiseXORExpression_More :
+	"^" BitwiseANDExpression BitwiseXORExpression_More
+	EPSILON
+
+BitwiseXORExpressionNoIn :
+	BitwiseANDExpressionNoIn BitwiseXORExpressionNoIn_More
+
+BitwiseXORExpressionNoIn_More :
+	"^" BitwiseANDExpressionNoIn BitwiseXORExpressionNoIn_More
+	EPSILON
+
+BitwiseORExpression :
+	BitwiseXORExpression BitwiseORExpression_More
+
+BitwiseORExpression_More :
+	"|" BitwiseXORExpression BitwiseORExpression_More
+	EPSILON
+
+BitwiseORExpressionNoIn :
+	BitwiseXORExpressionNoIn BitwiseORExpressionNoIn_More
+
+BitwiseORExpressionNoIn_More :
+	"|" BitwiseXORExpressionNoIn BitwiseORExpressionNoIn_More
+	EPSILON
+
+LogicalANDExpression :
+	BitwiseORExpression LogicalANDExpression_More
+
+LogicalANDExpression_More :
+	"&&" BitwiseORExpression LogicalANDExpression_More
+	EPSILON
+
+LogicalANDExpressionNoIn :
+	BitwiseORExpressionNoIn LogicalANDExpressionNoIn_More
+
+LogicalANDExpressionNoIn_More :
+	"&&" BitwiseORExpressionNoIn LogicalANDExpressionNoIn_More
+	EPSILON
+
+LogicalORExpression :
+	LogicalANDExpression LogicalORExpression_More
+
+LogicalORExpression_More :
+	"||" LogicalANDExpression LogicalORExpression_More
+	EPSILON
+
+LogicalORExpressionNoIn :
+	LogicalANDExpressionNoIn LogicalORExpressionNoIn_More
+
+LogicalORExpressionNoIn_More :
+	"||" LogicalANDExpressionNoIn LogicalORExpressionNoIn_More
+	EPSILON
+
+ConditionalExpression :
+	LogicalORExpression ConditionalExpression_More
+
+ConditionalExpression_More :
+	"?" AssignmentExpression ":" AssignmentExpression
+	EPSILON
+	
+ConditionalExpressionNoIn :
+	LogicalORExpressionNoIn ConditionalExpressionNoIn_More
+
+ConditionalExpressionNoIn_More :
+	"?" AssignmentExpression ":" AssignmentExpressionNoIn
+	EPSILON
+
+AssignmentExpression :
+	ConditionalExpression AssignmentExpression_More 
+# TODO: This needs special handling; I'll accept too much for now.
+#	ConditionalExpression
+#	LeftHandSideExpression AssignmentExpression_More 
+
+AssignmentExpression_More :
+	+ "=" AssignmentExpression
+	+ AssignmentOperator AssignmentExpression
+# TODO: EPSILON Added here to handle the condition above
+# Resolve parsing conflicts with this scheme when handling = and &= etc. by going with assignment
+	EPSILON
+
+AssignmentExpressionNoIn :
+	ConditionalExpressionNoIn AssignmentExpressionNoIn_AfterLHS
+# TODO: This needs special handling; I'll accept too much for now.
+#	ConditionalExpressionNoIn
+#	LeftHandSideExpression AssignmentExpressionNoIn_AfterLHS
+
+AssignmentExpressionNoIn_AfterLHS :
+	+ "=" AssignmentExpressionNoIn
+	+ AssignmentOperator AssignmentExpressionNoIn
+# TODO: EPSILON Added here to handle the condition above
+# Resolve parsing conflicts with this scheme when handling = and &= etc. by going with assignment
+	EPSILON
+
+AssignmentOperator :
+	"*="
+	"/="
+	"%="
+	"+="
+	"-="
+	"<<="
+	">>="
+	">>>="
+	"&="
+	"^="
+	"|="
+
+Expression :
+	AssignmentExpression Expression_More
+
+Expression_More :
+	"," AssignmentExpression
+	EPSILON
+
+ExpressionNoIn :
+	AssignmentExpressionNoIn ExpressionNoIn_More
+
+ExpressionNoIn_More :
+	"," AssignmentExpressionNoIn
+	EPSILON
+
+	
+# 12.1 Lexical Grammar (only the parts about types of literals)	
+
+Literal :
+	NullLiteral
+	BooleanLiteral
+	NumericLiteral
+	StringLiteral
+	RegularExpressionLiteral
+
+NullLiteral :
+	"null"
+
+BooleanLiteral :
+	"true"
+	"false"
