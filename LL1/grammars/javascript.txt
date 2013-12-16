@@ -1,0 +1,34 @@
+# A.5 Functions and Programs
+FunctionDeclaration :
+	"function" Identifier "(" FunctionExpression_ParametersOption
+	
+FunctionExpression :
+	"function" FunctionExpression_IdentifierOption
+
+FunctionExpression_IdentifierOption :
+	Identifier? "(" FunctionExpression_ParametersOption
+
+FunctionExpression_ParametersOption :
+	FormalParameterList? ")" "{" FunctionBody "}"
+
+	
+FormalParameterList :
+	Identifier FunctionParameterList_More
+
+FunctionParameterList_More :
+	"," Identifier FunctionParameterList_More
+	EPSILON
+	
+FunctionBody :
+	SourceElements
+	
+Program :
+	SourceElements?
+	
+SourceElements :
+	SourceElement SourceElements
+	EPSILON
+	
+SourceElement :
+	Statement
+	FunctionDeclaration
