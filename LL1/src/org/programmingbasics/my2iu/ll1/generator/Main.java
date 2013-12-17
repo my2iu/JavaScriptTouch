@@ -23,7 +23,7 @@ public class Main
   Map<String, Set<String>> followsTerminals = new HashMap<String, Set<String>>();
   Map<String, Map<String, Production>> parsingTable = new HashMap<String, Map<String, Production>>();
   Map<String, Set<String>> noAcceptTokenException = new HashMap<String, Set<String>>();
-  Set<Production> preferredProduction = new HashSet<Production>();
+//  Set<Production> preferredProduction = new HashSet<Production>();
   
   boolean isNonTerminal(String token)
   {
@@ -41,6 +41,13 @@ public class Main
     FileInputStream inStream = new FileInputStream("grammars/javascript.txt");
     InputStreamReader reader = new InputStreamReader(inStream, Charset.forName("UTF-8"));
     BufferedReader in = new BufferedReader(reader);
+    readData(in);
+    reader.close();
+    inStream.close();
+  }
+
+  public void readData(BufferedReader in) throws IOException
+  {
     while (true) 
     {
       String line = in.readLine();
@@ -57,7 +64,6 @@ public class Main
       if (Character.isWhitespace(line.codePointAt(0)))
       {
         String [] tokens = line.trim().split("[ \t]+");
-        boolean isPreferred = false;
         if (tokens.length == 1 && tokens[0].equals("EPSILON"))
         {
           // Special way to denote expansion to empty string
@@ -72,17 +78,8 @@ public class Main
           noAcceptTokenException.get(fromNonTerminal).add(terminal);
           continue;
         }
-        else if (tokens[0].equals("+"))
-        {
-          isPreferred = true;
-          String [] oldTokens = tokens;
-          tokens = new String[oldTokens.length - 1];
-          System.arraycopy(oldTokens, 1, tokens, 0, tokens.length);
-        }
         Production p = new Production(fromNonTerminal, tokens); 
         grammar.add(p);
-        if (isPreferred)
-          preferredProduction.add(p);
         continue;
       }
       
@@ -90,8 +87,6 @@ public class Main
       assert(line.trim().endsWith(":"));
       fromNonTerminal  = line.trim().split ("[ \t]+")[0];
     }
-    reader.close();
-    inStream.close();
   }
   
   public void go() throws IOException
@@ -100,6 +95,7 @@ public class Main
     
     calculateNonTerminals();
     expandOptionalTokens();
+    stripPrettyPrintInstructions();
     calculateFirsts();
     calculateFollows();
     createLLParsingTable();
@@ -108,34 +104,91 @@ public class Main
     runInteractiveBuilder();
   }
 
+  private void stripPrettyPrintInstructions()
+  {
+    for (Production p: grammar)
+    {
+      p.stripPrettyPrintInstructions();
+    }
+  }
+
+  private void handlePrettyPrint(String topOfStack)
+  {
+    // Handle any pretty print instructions.        
+    if (topOfStack.equals(Production.ENDL))
+    {
+      program += "\n";
+      isStartOfLine = true;
+      return;
+    } 
+    else if (topOfStack.equals(Production.TAB))
+    {
+      indentation++;
+      return;
+    }
+    else if (topOfStack.equals(Production.UNTAB))
+    {
+      indentation--;
+      return;
+    }
+  }
+  
+  int indentation = 0;
+  String program = "";
+  boolean isStartOfLine = true;
   private void runInteractiveBuilder() throws IOException
   {
     BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
     List<String> parsingStack = new ArrayList<String>();
     parsingStack.add("Program");
-    String program = "";
-    
     
     while (parsingStack.size() > 0)
     {
       // Remove terminals from top of stack
       while (isTerminal(parsingStack.get(parsingStack.size()-1)))
       {
-        program += " " + parsingStack.get(parsingStack.size()-1);
+        String topOfStack = parsingStack.get(parsingStack.size()-1); 
         parsingStack.remove(parsingStack.size()-1);
+    
+        if (Production.isPrettyPrintToken(topOfStack)) 
+        {
+          handlePrettyPrint(topOfStack);
+          continue;
+        }
+        
+        // Otherwise, remove any terminals and insert it into the stream.
+        if (isStartOfLine)
+        {
+          for (int n = 0; n < indentation; n++)
+            program += "  ";
+        }
+        program += " " + topOfStack;
+        isStartOfLine = false;
       }
 
       System.out.println(program);
       
       // Show options and get next token
       String token = chooseOptions(in, parsingStack);
+      if (token == null)
+      {
+        // For debugging purposes, we allow people to enter a bad option,
+        // then we return null, and replay this parsing step.
+        continue;
+      }
       
       // Parse the token
       while (isNonTerminal(parsingStack.get(parsingStack.size()-1)))
       {
         // Apply the appropriate production
         parseToken(parsingStack, token);
+        
+        while (Production.isPrettyPrintToken(parsingStack.get(parsingStack.size()-1))) 
+        {
+          handlePrettyPrint(parsingStack.get(parsingStack.size()-1));
+          parsingStack.remove(parsingStack.size()-1);
+        }
       }
       assert(parsingStack.get(parsingStack.size()-1).equals(token));
     }
@@ -154,6 +207,10 @@ public class Main
         return false;
       if (stack.isEmpty())
         return false;
+
+      // Strip pretty print tokens
+      while (Production.isPrettyPrintToken(stack.get(stack.size()-1)))
+        stack.remove(stack.size() - 1);
     }
     return stack.get(stack.size()-1).equals(token);
   }
@@ -164,9 +221,9 @@ public class Main
     Production p = parsingTable.get(topOfStack).get(token);
     if (p == null) return false;
     parsingStack.remove(parsingStack.size()-1);
-    for (int n = p.to.size() - 1; n >= 0; n--)
+    for (int n = p.toFull.size() - 1; n >= 0; n--)
     {
-      parsingStack.add(p.to.get(n));
+      parsingStack.add(p.toFull.get(n));
     }
     return true;
   }
@@ -188,7 +245,12 @@ public class Main
     for (int validOption: validOptions)
       System.out.println("  " + validOption + " " + options.get(validOption));
     String line = in.readLine();
-    int choice = Integer.parseInt(line);
+    int choice;
+    try {
+      choice = Integer.parseInt(line);
+    } catch (NumberFormatException e) {
+      return null;
+    }
     return options.get(choice);
   }
   
@@ -271,14 +333,12 @@ public class Main
     if (parsingTable.get(from).containsKey(token))
     {
       // We have a conflict. See if we have a preferred rule.
-      if (preferredProduction.contains(parsingTable.get(from).get(token))
-          && !preferredProduction.contains(p)) 
+      if (parsingTable.get(from).get(token).isPreferred && !p.isPreferred)
       {
         // Existing rule is preferred, go with that.
         return;
       }
-      if (!preferredProduction.contains(parsingTable.get(from).get(token))
-          && preferredProduction.contains(p))
+      if (!parsingTable.get(from).get(token).isPreferred && p.isPreferred)
       {
         // New rule is preferred, replace it.
         parsingTable.get(from).put(token, p);

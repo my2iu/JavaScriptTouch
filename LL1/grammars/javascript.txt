@@ -9,7 +9,7 @@ FunctionExpression_IdentifierOption :
 	Identifier? "(" FunctionExpression_ParametersOption
 
 FunctionExpression_ParametersOption :
-	FormalParameterList? ")" "{" FunctionBody "}"
+	FormalParameterList? ")" "{" <endl> <tab> FunctionBody <untab> "}" <endl> 
 	
 FormalParameterList :
 	Identifier FunctionParameterList_More
@@ -64,7 +64,7 @@ StatementList_More :
 	EPSILON
 
 VariableStatement :
-	"var" VariableDeclarationList ";"
+	"var" VariableDeclarationList ";" <endl>
 
 VariableDeclarationList :
 	VariableDeclaration VariableDeclarationList_More
@@ -99,20 +99,26 @@ InitialiserNoIn :
 	"=" AssignmentExpressionNoIn
 
 EmptyStatement :
-	";"
+	";" <endl>
 
 ExpressionStatement :
-	Expression ";"
+	Expression ";" <endl>
 	EXCEPTIION_PEEK_NO_ACCEPT "function"
 	EXCEPTIION_PEEK_NO_ACCEPT "{"
 #	[lookahead ∉ {{, function}] Expression ;
 
 IfStatement :
-	"if" "(" Expression ")" "{" Statement "}" IfStatement_Else 
+	"if" "(" Expression ")" "{" <endl> <tab>  IfStatement_Block
+
+IfStatement_Block :
+	StatementList? <untab> "}" IfStatement_Else
 
 IfStatement_Else :
-	"else" "{" Statement "}"
-	EPSILON
+	"else" "{" <endl> <tab> Statement <untab> "}" <endl>
+	"else_if" "(" Expression ")" "{" <endl> <tab> IfStatement_Block
+	<endl>
+# Removed the EPSILON to sneak in the pretty print statement	
+#	EPSILON
 	
 IterationStatement :
 	"do" Statement "while" "(" Expression ");"
@@ -140,24 +146,24 @@ ContinueStatement :
 #	continue [no LineTerminator here] Identifier ;
 
 ContinueStatement_Identifier :
-	Identifier ";"
-	";"
+	Identifier ";" <endl>
+	";" <endl>
 
 BreakStatement :
 	"break" BreakStatement_Identifier
 #	break [no LineTerminator here] Identifier ;
 
 BreakStatement_Identifier :
-	Identifier ";"
-	";"
+	Identifier ";" <endl>
+	";" <endl>
 
 ReturnStatement :
 	"return" ReturnStatement_Expression
 #	return [no LineTerminator here] Expression ";"
 
 ReturnStatement_Expression :
-	Expression ";"
-	";"
+	Expression ";" <endl>
+	";" <endl>
 
 WithStatement :
 	"with" "(" Expression ")" Statement
@@ -166,7 +172,7 @@ SwitchStatement :
 	"switch" "(" Expression ")" CaseBlock
 
 CaseBlock :
-	"{" CaseBlock_Clauses "}"
+	"{" <endl> <tab> <tab> CaseBlock_Clauses <untab> <untab> "}" <endl>
 
 CaseBlock_Clauses :
 	EPSILON
@@ -188,19 +194,19 @@ CaseClauses_More :
 	EPSILON
 
 CaseClause :
-	"case" Expression ":" CaseClause_StatementList
+	<untab> "case" Expression ":" <endl> <tab> CaseClause_StatementList
 
 CaseClause_StatementList :
 	StatementList?
 	
 DefaultClause :
-	"default" ":" CaseClause_StatementList
+	<untab> "default" ":" <endl> <tab> CaseClause_StatementList
 
 #LabelledStatement :
 #	Identifier ":" Statement
 
 ThrowStatement :
-	"throw" Expression ";"
+	"throw" Expression ";" <endl>
 #	throw [no LineTerminator here] Expression ;
 
 TryStatement :
@@ -221,7 +227,7 @@ Finally :
 	"finally" Block
 
 DebuggerStatement :
-	"debugger" ";"	
+	"debugger" ";"	<endl>
 	
 	
 # A.3 Expressions
