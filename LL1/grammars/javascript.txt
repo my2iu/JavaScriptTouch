@@ -51,10 +51,17 @@ Statement :
 	DebuggerStatement
 
 Block :
-	"{" Block_More
+	"{" <endl> <tab> Block_More
 
 Block_More :
-	StatementList? "}"
+	StatementList? <untab> "}" <endl>
+
+BlockNoNewline :
+	"{" <endl> <tab> BlockNoNewline_More
+
+BlockNoNewline_More :
+	StatementList? <untab> "}"
+
 
 StatementList :
 	Statement StatementList_More
@@ -108,14 +115,12 @@ ExpressionStatement :
 #	[lookahead ∉ {{, function}] Expression ;
 
 IfStatement :
-	"if" "(" Expression ")" "{" <endl> <tab>  IfStatement_Block
-
-IfStatement_Block :
-	StatementList? <untab> "}" IfStatement_Else
+	"if" "(" Expression ")" BlockNoNewline IfStatement_Else
+#	"if" "(" Expression ")" "{" <endl> <tab> IfStatement_Block
 
 IfStatement_Else :
-	"else" "{" <endl> <tab> Statement <untab> "}" <endl>
-	"else_if" "(" Expression ")" "{" <endl> <tab> IfStatement_Block
+	"else" Block
+	"else_if" "(" Expression ")" BlockNoNewline IfStatement_Else
 	<endl>
 # Removed the EPSILON to sneak in the pretty print statement	
 #	EPSILON
