@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class Main
+public class LL1Generator
 {
   public static String EMPTY = "";
   
@@ -35,10 +35,10 @@ public class Main
     return !isNonTerminal(token);
   }
   
-  private void readData() throws IOException
+  private void readData(String filename) throws IOException
   {
     // Start reading in the grammar rules
-    FileInputStream inStream = new FileInputStream("grammars/javascript.txt");
+    FileInputStream inStream = new FileInputStream(filename);
     InputStreamReader reader = new InputStreamReader(inStream, Charset.forName("UTF-8"));
     BufferedReader in = new BufferedReader(reader);
     readData(in);
@@ -89,22 +89,22 @@ public class Main
     }
   }
   
-  public void go() throws IOException
+  public void generateParser()
   {
-    readData();
-    
     calculateNonTerminals();
     expandOptionalTokens();
     stripPrettyPrintInstructions();
     calculateFirsts();
     calculateFollows();
     createLLParsingTable();
-
-    printProductions();
-    LLParser parser = new LLParser(parsingTable, nonTerminals);
-    parser.runInteractiveBuilder();
   }
 
+  public LLParser createParser()
+  {
+    LLParser parser = new LLParser(parsingTable, nonTerminals);
+    return parser;
+  }
+  
   private void stripPrettyPrintInstructions()
   {
     for (Production p: grammar)
@@ -397,6 +397,11 @@ public class Main
   
   public static void main(String [] args) throws IOException
   {
-    new Main().go();
+    LL1Generator ll1 = new LL1Generator();
+    ll1.readData("src/org/programmingbasics/my2iu/ll1/js/javascript.txt");
+    ll1.generateParser();
+    ll1.printProductions();
+    LLParser parser = ll1.createParser();
+    parser.runInteractiveBuilder();
   }
 }

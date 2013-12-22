@@ -21,6 +21,7 @@ public class Main implements EntryPoint
    */
   public void onModuleLoad()
   {
+    Browser.getWindow().alert("Hello");
 //    Audio.initialize();
 //    Screen.switchTo(new TitleScreen());
 //    Screen.switchTo(new MainGameScreen(0));
