@@ -1,4 +1,15 @@
-package org.programmingbasics.my2iu.ll1.js.gwt.client;
+package org.programmingbasics.my2iu.ll1.js.gwt;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.nio.charset.Charset;
+
+import org.programmingbasics.my2iu.ll1.generator.GrammarReader;
+import org.programmingbasics.my2iu.ll1.generator.LL1Generator;
+import org.programmingbasics.my2iu.ll1.generator.LLParser;
 
 import com.google.gwt.core.client.EntryPoint;
 
@@ -21,6 +32,11 @@ public class Main implements EntryPoint
    */
   public void onModuleLoad()
   {
+    LL1Generator ll1 = GrammarReader.readGrammarFromString(ResourceLoader.INSTANCE.jsGrammar().getText());
+    ll1.generateParser();
+    LLParser parser = ll1.createParser();
+//      parser.runInteractiveBuilder();
+
     Browser.getWindow().alert("Hello");
 //    Audio.initialize();
 //    Screen.switchTo(new TitleScreen());

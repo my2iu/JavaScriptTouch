@@ -12,11 +12,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.core.shared.GwtIncompatible;
+
 public class LL1Generator
 {
   public static String EMPTY = "";
   
-  String fromNonTerminal;
   List<Production> grammar = new ArrayList<Production>();
   Set<String> nonTerminals = new HashSet<String>();
   Map<String, Set<String>> firstTerminals = new HashMap<String, Set<String>>();
@@ -33,60 +34,6 @@ public class LL1Generator
   boolean isTerminal(String token)
   {
     return !isNonTerminal(token);
-  }
-  
-  private void readData(String filename) throws IOException
-  {
-    // Start reading in the grammar rules
-    FileInputStream inStream = new FileInputStream(filename);
-    InputStreamReader reader = new InputStreamReader(inStream, Charset.forName("UTF-8"));
-    BufferedReader in = new BufferedReader(reader);
-    readData(in);
-    reader.close();
-    inStream.close();
-  }
-
-  public void readData(BufferedReader in) throws IOException
-  {
-    while (true) 
-    {
-      String line = in.readLine();
-      if (line == null) break;
-      
-      // Skip comments
-      if (line.startsWith("#") || line.startsWith("//"))
-        continue;
-      // Skip blank lines
-      if (line.matches("^[ \t\r\n]*$"))
-        continue;
-       
-      // If it begins with whitespace, then we have a production
-      if (Character.isWhitespace(line.codePointAt(0)))
-      {
-        String [] tokens = line.trim().split("[ \t]+");
-        if (tokens.length == 1 && tokens[0].equals("EPSILON"))
-        {
-          // Special way to denote expansion to empty string
-          grammar.add(new Production(fromNonTerminal, new String[0]));
-          continue;
-        } 
-        else if (tokens[0].equals("EXCEPTIION_PEEK_NO_ACCEPT"))
-        {
-          String terminal = tokens[1];
-          if (!noAcceptTokenException.containsKey(fromNonTerminal))
-            noAcceptTokenException.put(fromNonTerminal, new HashSet<String>());
-          noAcceptTokenException.get(fromNonTerminal).add(terminal);
-          continue;
-        }
-        Production p = new Production(fromNonTerminal, tokens); 
-        grammar.add(p);
-        continue;
-      }
-      
-      // Otherwise, we have the start of a new rule
-      assert(line.trim().endsWith(":"));
-      fromNonTerminal  = line.trim().split ("[ \t]+")[0];
-    }
   }
   
   public void generateParser()
@@ -395,10 +342,9 @@ public class LL1Generator
     grammar.removeAll(toDelete);
   }
   
-  public static void main(String [] args) throws IOException
+  @GwtIncompatible public static void main(String [] args) throws IOException
   {
-    LL1Generator ll1 = new LL1Generator();
-    ll1.readData("src/org/programmingbasics/my2iu/ll1/js/javascript.txt");
+    LL1Generator ll1 = GrammarReader.readGrammar("src/org/programmingbasics/my2iu/ll1/js/javascript.txt");
     ll1.generateParser();
     ll1.printProductions();
     LLParser parser = ll1.createParser();

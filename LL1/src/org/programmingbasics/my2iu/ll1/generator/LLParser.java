@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.core.shared.GwtIncompatible;
+
 public class LLParser
 {
   Map<String, Map<String, Production>> parsingTable;
@@ -22,7 +24,7 @@ public class LLParser
   int indentation = 0;
   String program = "";
   boolean isStartOfLine = true;
-  public void runInteractiveBuilder() throws IOException
+  @GwtIncompatible public void runInteractiveBuilder() throws IOException
   {
     BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
@@ -114,6 +116,7 @@ public class LLParser
     return true;
   }
   
+  @GwtIncompatible 
   private String chooseOptions(BufferedReader in, List<String> parsingStack) throws IOException
   {
     String topOfStack = parsingStack.get(parsingStack.size() - 1);

@@ -13,11 +13,12 @@
   <!-- Other module inherits                                      -->
 
   <!-- Specify the app entry point class.                         -->
-  <entry-point class='org.programmingbasics.my2iu.ll1.js.gwt.client.Main'/>
+  <entry-point class='org.programmingbasics.my2iu.ll1.js.gwt.Main'/>
 
   <!-- Specify the paths for translatable code                    -->
-  <source path='client'/>
-  <source path='../../generator'/>
+  <source path='js/gwt'/>
+  <source path='js'/>
+  <source path='generator'/>
 
   <add-linker name="xsiframe"/>
   <set-configuration-property name="devModeRedirectEnabled" value="true"/>
