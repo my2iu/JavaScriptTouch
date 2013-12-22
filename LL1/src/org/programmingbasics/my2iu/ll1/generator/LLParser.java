@@ -12,8 +12,12 @@ import com.google.gwt.core.shared.GwtIncompatible;
 
 public class LLParser
 {
-  Map<String, Map<String, Production>> parsingTable;
-  Set<String> nonTerminals;
+  final Map<String, Map<String, Production>> parsingTable;
+  final Set<String> nonTerminals;
+  
+  int indentation = 0;
+  public String program = "";
+  public List<String> parsingStack = new ArrayList<String>();
   
   public LLParser(Map<String, Map<String, Production>> parsingTable, Set<String> nonTerminals)
   {
@@ -21,40 +25,17 @@ public class LLParser
     this.nonTerminals = nonTerminals;
   }
   
-  int indentation = 0;
-  String program = "";
   boolean isStartOfLine = true;
   @GwtIncompatible public void runInteractiveBuilder() throws IOException
   {
     BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
-    List<String> parsingStack = new ArrayList<String>();
     parsingStack.add("Program");
     
     while (parsingStack.size() > 0)
     {
-      // Remove terminals from top of stack
-      while (isTerminal(parsingStack.get(parsingStack.size()-1)))
-      {
-        String topOfStack = parsingStack.get(parsingStack.size()-1); 
-        parsingStack.remove(parsingStack.size()-1);
-    
-        if (Production.isPrettyPrintToken(topOfStack)) 
-        {
-          handlePrettyPrint(topOfStack);
-          continue;
-        }
-        
-        // Otherwise, remove any terminals and insert it into the stream.
-        if (isStartOfLine)
-        {
-          for (int n = 0; n < indentation; n++)
-            program += "  ";
-        }
-        program += " " + topOfStack;
-        isStartOfLine = false;
-      }
-
+      automatchTerminals();
+      
       System.out.println(program);
       
       // Show options and get next token
@@ -66,21 +47,51 @@ public class LLParser
         continue;
       }
       
-      // Parse the token
-      while (isNonTerminal(parsingStack.get(parsingStack.size()-1)))
-      {
-        // Apply the appropriate production
-        parseToken(parsingStack, token);
-        
-        while (Production.isPrettyPrintToken(parsingStack.get(parsingStack.size()-1))) 
-        {
-          handlePrettyPrint(parsingStack.get(parsingStack.size()-1));
-          parsingStack.remove(parsingStack.size()-1);
-        }
-      }
-      assert(parsingStack.get(parsingStack.size()-1).equals(token));
+      fullParseToken(token);
     }
     in.close();
+  }
+
+  public void fullParseToken(String token)
+  {
+    // Parse the token
+    while (isNonTerminal(parsingStack.get(parsingStack.size()-1)))
+    {
+      // Apply the appropriate production
+      parseToken(parsingStack, token);
+      
+      while (Production.isPrettyPrintToken(parsingStack.get(parsingStack.size()-1))) 
+      {
+        handlePrettyPrint(parsingStack.get(parsingStack.size()-1));
+        parsingStack.remove(parsingStack.size()-1);
+      }
+    }
+    assert(parsingStack.get(parsingStack.size()-1).equals(token));
+  }
+
+  public void automatchTerminals()
+  {
+    // Remove terminals from top of stack
+    while (isTerminal(parsingStack.get(parsingStack.size()-1)))
+    {
+      String topOfStack = parsingStack.get(parsingStack.size()-1); 
+      parsingStack.remove(parsingStack.size()-1);
+  
+      if (Production.isPrettyPrintToken(topOfStack)) 
+      {
+        handlePrettyPrint(topOfStack);
+        continue;
+      }
+      
+      // Otherwise, remove any terminals and insert it into the stream.
+      if (isStartOfLine)
+      {
+        for (int n = 0; n < indentation; n++)
+          program += "  ";
+      }
+      program += " " + topOfStack;
+      isStartOfLine = false;
+    }
   }
 
   private boolean speculativeParse(List<String> parsingStack, String token)
@@ -115,24 +126,35 @@ public class LLParser
     }
     return true;
   }
+
+  public List<String> findValidOptions()
+  {
+    return findValidOptions(parsingStack);
+  }
   
-  @GwtIncompatible 
-  private String chooseOptions(BufferedReader in, List<String> parsingStack) throws IOException
+  private List<String> findValidOptions(List<String> parsingStack)
   {
     String topOfStack = parsingStack.get(parsingStack.size() - 1);
     List<String> options = new ArrayList<String>(parsingTable.get(topOfStack).keySet());
-    List<Integer> validOptions = new ArrayList<Integer>();
+    List<String> validOptions = new ArrayList<String>();
     System.out.println(topOfStack);
     for (int n = 0; n < options.size(); n++) {
       // Some expansions aren't legal. Do a speculative parse to see if 
       // the given parse is legal or not.
       if (speculativeParse(parsingStack, options.get(n)))
-        validOptions.add(n);
+        validOptions.add(options.get(n));
     }
-    if (validOptions.size() == 1)
-      return options.get(validOptions.get(0));
-    for (int validOption: validOptions)
-      System.out.println("  " + validOption + " " + options.get(validOption));
+    return validOptions;
+  }
+  
+  @GwtIncompatible 
+  private String chooseOptions(BufferedReader in, List<String> parsingStack) throws IOException
+  {
+    List<String> options = findValidOptions(parsingStack);
+    if (options.size() == 1)
+      return options.get(0);
+    for (int n = 0; n < options.size(); n++)
+      System.out.println("  " + n + " " + options.get(n));
     String line = in.readLine();
     int choice;
     try {

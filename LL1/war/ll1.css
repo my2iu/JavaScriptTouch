@@ -1,0 +1,12 @@
+
+
+#program {
+	height: 300px;	
+	border: 1px solid black;
+	overflow: scroll;
+}
+
+#choices {
+	height: 300px;
+	border: 1px solid black;
+}
