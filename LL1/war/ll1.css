@@ -9,4 +9,24 @@
 #choices {
 	height: 300px;
 	border: 1px solid black;
+	font-size: 24px;
+/*
+	line-height: 36px;
+	font-size: 20px;
+	*/
+}
+
+a.choicebutton {
+}
+
+a.choicebutton div {
+	color: black;
+	font-family: sans-serif;
+	display: inline-block;
+	background-color: orange;
+	background-image: linear-gradient(to bottom, orange, orange 50%, grey);	
+	border-radius: 10px;
+	padding: 5px;
+	margin: 5px;
+	
 }

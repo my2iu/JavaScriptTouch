@@ -31,12 +31,14 @@ import elemental.html.Window;
 public class Main implements EntryPoint
 {
   LLParser parser;
+  Document doc;
   
   /**
    * This is the entry point method.
    */
   public void onModuleLoad()
   {
+    doc = Browser.getDocument();
     LL1Generator ll1 = GrammarReader.readGrammarFromString(ResourceLoader.INSTANCE.jsGrammar().getText());
     ll1.generateParser();
     parser = ll1.createParser();
@@ -59,7 +61,6 @@ public class Main implements EntryPoint
   
   public void updateDisplayAndShowOptions()
   {
-    Document doc = Browser.getDocument();
     Element choicesPanel = doc.getElementById("choices");
     Element programPanel = doc.getElementById("program");
     choicesPanel.setInnerHTML("");
@@ -71,39 +72,42 @@ public class Main implements EntryPoint
       
       List<String> options = parser.findValidOptions();
       
-      for (final String choice: options)
+      if (options.size() == 1)
       {
-        SpanElement span = doc.createSpanElement();
-        span.appendChild(doc.createTextNode(choice));
-        AnchorElement anchor = doc.createAnchorElement();
-        anchor.setHref("#");
-        anchor.appendChild(span);
-        anchor.addEventListener("click", new EventListener() {
-          @Override
-          public void handleEvent(Event evt)
-          {
-            evt.preventDefault();
-            evt.stopPropagation();
-            parser.fullParseToken(choice);
-            updateDisplayAndShowOptions();
-          }}, false);
-        
-        choicesPanel.appendChild(anchor);
-        choicesPanel.appendChild(doc.createTextNode(" "));
+        handleInput(options.get(0));
       }
-//      System.out.println(program);
-//      
-//      // Show options and get next token
-//      String token = chooseOptions(in, parsingStack);
-//      if (token == null)
-//      {
-//        // For debugging purposes, we allow people to enter a bad option,
-//        // then we return null, and replay this parsing step.
-//        continue;
-//      }
-      
-//      parser.fullParseToken(token);
+      else 
+      {
+        for (final String choice: options)
+        {
+          choicesPanel.appendChild(createChoiceButton(choice));
+          choicesPanel.appendChild(doc.createTextNode(" "));
+        }
+      }
     }
-    
+  }
+
+  public Element createChoiceButton(final String choice)
+  {
+    Element div = doc.createDivElement();
+    div.appendChild(doc.createTextNode(choice));
+    AnchorElement anchor = (AnchorElement)doc.createElement("A");
+    anchor.setHref("#");
+    anchor.appendChild(div);
+    anchor.setClassName("choicebutton");
+    anchor.addEventListener("click", new EventListener() {
+      @Override public void handleEvent(Event evt)
+      {
+        evt.preventDefault();
+        evt.stopPropagation();
+        handleInput(choice);
+      }}, false);
+    return anchor;
+  }
+  
+  public void handleInput(String token)
+  {
+    parser.fullParseToken(token);
+    updateDisplayAndShowOptions();
   }
 }
