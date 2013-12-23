@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.programmingbasics.my2iu.ll1.generator.GrammarReader;
@@ -80,6 +82,13 @@ public class Main implements EntryPoint
       }
       else 
       {
+        Collections.sort(options, new Comparator<String>() {
+          @Override
+          public int compare(String o1, String o2)
+          {
+            return Integer.compare(ChoiceOrdering.TERMINAL_ORDER.get(o1), 
+                ChoiceOrdering.TERMINAL_ORDER.get(o2));
+          }});
         for (final String choice: options)
         {
           choicesPanel.appendChild(createChoiceButton(choice));

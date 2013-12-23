@@ -308,6 +308,20 @@ public class LL1Generator
     }
   }
   
+  public Set<String> calculateTerminals()
+  {
+    Set<String> terminals = new HashSet<>();
+    for (Production p: grammar) 
+    {
+      for (String to: p.to)
+      {
+        terminals.add(to);
+      }
+    }
+    terminals.removeAll(nonTerminals);
+    return terminals;
+  }
+  
   private void expandOptionalTokens()
   {
     List<Production> toDelete = new ArrayList<Production>();
@@ -347,6 +361,7 @@ public class LL1Generator
     LL1Generator ll1 = GrammarReader.readGrammar("src/org/programmingbasics/my2iu/ll1/js/javascript.txt");
     ll1.generateParser();
     ll1.printProductions();
+//    System.out.println(ll1.calculateTerminals());
     LLParser.runInteractiveBuilder(ll1);
   }
 }
