@@ -15,6 +15,8 @@ public class PrettyHtmlFormatter implements PrettyFormatter
   Element programDiv;
   Element currentLineDiv;
   Document doc;
+
+  private static int TAB_SIZE = 16;
   
   public PrettyHtmlFormatter()
   {
@@ -55,10 +57,25 @@ public class PrettyHtmlFormatter implements PrettyFormatter
     if (isStartOfLine)
     {
       currentLineDiv = doc.createDivElement();
-      currentLineDiv.getStyle().setPaddingLeft(indentation * 16, Unit.PX);
+      currentLineDiv.getStyle().setPaddingLeft(indentation * TAB_SIZE, Unit.PX);
       programDiv.appendChild(currentLineDiv);
+    } 
+    else
+    {
+      currentLineDiv.appendChild(doc.createTextNode(" "));
     }
-    currentLineDiv.appendChild(doc.createTextNode(" " + token));
+    
+    // Special formatting for certain things
+    if (token.length() > 2 && token.startsWith("\"") && token.endsWith("\""))
+    {
+      Element el = doc.createElement("b");
+      el.appendChild(doc.createTextNode(token.substring(1, token.length() - 1)));
+      currentLineDiv.appendChild(el);
+    }
+    else
+    {
+      currentLineDiv.appendChild(doc.createTextNode(token));
+    }
     isStartOfLine = false;
   }
 }

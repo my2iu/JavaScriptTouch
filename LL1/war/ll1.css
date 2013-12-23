@@ -26,7 +26,7 @@ a.choicebutton div {
 	background-color: orange;
 	background-image: linear-gradient(to bottom, orange, orange 50%, grey);	
 	border-radius: 10px;
-	padding: 5px;
+	padding: 5px 15px 5px 15px;
 	margin: 5px;
 	
 }

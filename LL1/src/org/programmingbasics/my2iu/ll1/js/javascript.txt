@@ -1,3 +1,5 @@
+# From ECMAScript Language Specification: ECMA-262 Edition 5.1
+
 # A.5 Functions and Programs
 FunctionDeclaration :
 	"function" Identifier "(" FunctionExpression_ParametersOption
@@ -126,8 +128,10 @@ IfStatement_Else :
 #	EPSILON
 	
 IterationStatement :
-	"do" Statement "while" "(" Expression ");"
-	"while" "(" Expression ")" Statement
+	"do" BlockNoNewline "while" "(" Expression ");" <endl>
+	"while" "(" Expression ")" Block
+#	"do" BlockNoNewline "while" "(" Expression ");"
+#	"while" "(" Expression ")" Statement
 	"for" "(" IterationStatement_For
 	"for...in" "(" IterationStatement_ForIn
 
@@ -139,11 +143,11 @@ IterationStatement_ForExpression2 :
 	Expression? ";" IterationStatement_ForExpression3
 
 IterationStatement_ForExpression3 :
-	Expression? ")" Statement
+	Expression? ")" Block
 	
 IterationStatement_ForIn :
-	LeftHandSideExpression "in" Expression ")" Statement
-	"var" VariableDeclarationNoIn "in" Expression ")" Statement
+	LeftHandSideExpression "in" Expression ")" Block
+	"var" VariableDeclarationNoIn "in" Expression ")" Block
 
 	
 ContinueStatement :
@@ -171,7 +175,7 @@ ReturnStatement_Expression :
 	";" <endl>
 
 WithStatement :
-	"with" "(" Expression ")" Statement
+	"with" "(" Expression ")" Block
 
 SwitchStatement :
 	"switch" "(" Expression ")" CaseBlock

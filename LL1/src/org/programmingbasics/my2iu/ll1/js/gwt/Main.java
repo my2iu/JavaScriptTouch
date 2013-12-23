@@ -92,7 +92,12 @@ public class Main implements EntryPoint
   public Element createChoiceButton(final String choice)
   {
     Element div = doc.createDivElement();
-    div.appendChild(doc.createTextNode(choice));
+    String buttonText = choice;
+    if (buttonText.length() > 2 && buttonText.startsWith("\"") && buttonText.endsWith("\""))
+    {
+      buttonText = buttonText.substring(1, buttonText.length() - 1);
+    }
+    div.appendChild(doc.createTextNode(buttonText));
     AnchorElement anchor = (AnchorElement)doc.createElement("A");
     anchor.setHref("#");
     anchor.appendChild(div);
