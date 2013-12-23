@@ -14,32 +14,34 @@ public class LLParser
 {
   final Map<String, Map<String, Production>> parsingTable;
   final Set<String> nonTerminals;
+  final PrettyFormatter formatter;
   
-  int indentation = 0;
-  public String program = "";
   public List<String> parsingStack = new ArrayList<String>();
   
-  public LLParser(Map<String, Map<String, Production>> parsingTable, Set<String> nonTerminals)
+  public LLParser(Map<String, Map<String, Production>> parsingTable, Set<String> nonTerminals, PrettyFormatter formatter)
   {
     this.parsingTable = parsingTable;
     this.nonTerminals = nonTerminals;
+    this.formatter = formatter;
   }
   
-  boolean isStartOfLine = true;
-  @GwtIncompatible public void runInteractiveBuilder() throws IOException
+  @GwtIncompatible public static void runInteractiveBuilder(LL1Generator ll1) throws IOException
   {
+    PrettyTextFormatter formatter = new PrettyTextFormatter();
+    LLParser parser = ll1.createParser(formatter);
+
     BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
-    parsingStack.add("Program");
+    parser.parsingStack.add("Program");
     
-    while (parsingStack.size() > 0)
+    while (parser.parsingStack.size() > 0)
     {
-      automatchTerminals();
+      parser.automatchTerminals();
       
-      System.out.println(program);
+      System.out.println(formatter.getProgramText());
       
       // Show options and get next token
-      String token = chooseOptions(in, parsingStack);
+      String token = chooseOptions(parser, in, parser.parsingStack);
       if (token == null)
       {
         // For debugging purposes, we allow people to enter a bad option,
@@ -47,9 +49,27 @@ public class LLParser
         continue;
       }
       
-      fullParseToken(token);
+      parser.fullParseToken(token);
     }
     in.close();
+  }
+
+  @GwtIncompatible 
+  private static String chooseOptions(LLParser parser, BufferedReader in, List<String> parsingStack) throws IOException
+  {
+    List<String> options = parser.findValidOptions(parsingStack);
+    if (options.size() == 1)
+      return options.get(0);
+    for (int n = 0; n < options.size(); n++)
+      System.out.println("  " + n + " " + options.get(n));
+    String line = in.readLine();
+    int choice;
+    try {
+      choice = Integer.parseInt(line);
+    } catch (NumberFormatException e) {
+      return null;
+    }
+    return options.get(choice);
   }
 
   public void fullParseToken(String token)
@@ -62,7 +82,7 @@ public class LLParser
       
       while (Production.isPrettyPrintToken(parsingStack.get(parsingStack.size()-1))) 
       {
-        handlePrettyPrint(parsingStack.get(parsingStack.size()-1));
+        formatter.handlePrettyPrint(parsingStack.get(parsingStack.size()-1));
         parsingStack.remove(parsingStack.size()-1);
       }
     }
@@ -79,18 +99,12 @@ public class LLParser
   
       if (Production.isPrettyPrintToken(topOfStack)) 
       {
-        handlePrettyPrint(topOfStack);
+        formatter.handlePrettyPrint(topOfStack);
         continue;
       }
       
       // Otherwise, remove any terminals and insert it into the stream.
-      if (isStartOfLine)
-      {
-        for (int n = 0; n < indentation; n++)
-          program += "  ";
-      }
-      program += " " + topOfStack;
-      isStartOfLine = false;
+      formatter.insertToken(topOfStack);
     }
   }
 
@@ -145,45 +159,6 @@ public class LLParser
         validOptions.add(options.get(n));
     }
     return validOptions;
-  }
-  
-  @GwtIncompatible 
-  private String chooseOptions(BufferedReader in, List<String> parsingStack) throws IOException
-  {
-    List<String> options = findValidOptions(parsingStack);
-    if (options.size() == 1)
-      return options.get(0);
-    for (int n = 0; n < options.size(); n++)
-      System.out.println("  " + n + " " + options.get(n));
-    String line = in.readLine();
-    int choice;
-    try {
-      choice = Integer.parseInt(line);
-    } catch (NumberFormatException e) {
-      return null;
-    }
-    return options.get(choice);
-  }
-  
-  private void handlePrettyPrint(String topOfStack)
-  {
-    // Handle any pretty print instructions.        
-    if (topOfStack.equals(Production.ENDL))
-    {
-      program += "\n";
-      isStartOfLine = true;
-      return;
-    } 
-    else if (topOfStack.equals(Production.TAB))
-    {
-      indentation++;
-      return;
-    }
-    else if (topOfStack.equals(Production.UNTAB))
-    {
-      indentation--;
-      return;
-    }
   }
   
   boolean isNonTerminal(String token)

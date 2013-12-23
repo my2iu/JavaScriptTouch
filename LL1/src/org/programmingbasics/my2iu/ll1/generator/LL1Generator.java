@@ -46,9 +46,9 @@ public class LL1Generator
     createLLParsingTable();
   }
 
-  public LLParser createParser()
+  public LLParser createParser(PrettyFormatter formatter)
   {
-    LLParser parser = new LLParser(parsingTable, nonTerminals);
+    LLParser parser = new LLParser(parsingTable, nonTerminals, formatter);
     return parser;
   }
   
@@ -347,7 +347,6 @@ public class LL1Generator
     LL1Generator ll1 = GrammarReader.readGrammar("src/org/programmingbasics/my2iu/ll1/js/javascript.txt");
     ll1.generateParser();
     ll1.printProductions();
-    LLParser parser = ll1.createParser();
-    parser.runInteractiveBuilder();
+    LLParser.runInteractiveBuilder(ll1);
   }
 }

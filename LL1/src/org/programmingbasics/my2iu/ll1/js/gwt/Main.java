@@ -32,6 +32,7 @@ public class Main implements EntryPoint
 {
   LLParser parser;
   Document doc;
+  PrettyHtmlFormatter programFormatter = new PrettyHtmlFormatter();
   
   /**
    * This is the entry point method.
@@ -41,7 +42,7 @@ public class Main implements EntryPoint
     doc = Browser.getDocument();
     LL1Generator ll1 = GrammarReader.readGrammarFromString(ResourceLoader.INSTANCE.jsGrammar().getText());
     ll1.generateParser();
-    parser = ll1.createParser();
+    parser = ll1.createParser(programFormatter);
 //      parser.runInteractiveBuilder();
 
     
@@ -68,7 +69,8 @@ public class Main implements EntryPoint
     if (parser.parsingStack.size() > 0)
     {
       parser.automatchTerminals();
-      programPanel.setTextContent(parser.program);
+      programPanel.setInnerHTML("");
+      programPanel.appendChild(programFormatter.programDiv);
       
       List<String> options = parser.findValidOptions();
       
