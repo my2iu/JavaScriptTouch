@@ -1,5 +1,7 @@
 package org.programmingbasics.my2iu.ll1.js.gwt;
 
+import javax.annotation.Nullable;
+
 import org.programmingbasics.my2iu.ll1.generator.PrettyFormatter;
 import org.programmingbasics.my2iu.ll1.generator.Production;
 
@@ -54,6 +56,11 @@ public class PrettyHtmlFormatter implements PrettyFormatter
   @Override
   public void insertToken(String token)
   {
+    insertToken(token, null);
+  }
+  
+  public void insertToken(String token, @Nullable String content)
+  {
     if (isStartOfLine)
     {
       currentLineDiv = doc.createDivElement();
@@ -74,8 +81,28 @@ public class PrettyHtmlFormatter implements PrettyFormatter
     }
     else
     {
-      currentLineDiv.appendChild(doc.createTextNode(token));
+      if (content != null)
+      {
+        switch (token)
+        {
+          case "Identifier":
+            currentLineDiv.appendChild(doc.createTextNode("$" + content));
+            break;
+          case "StringLiteral":
+            currentLineDiv.appendChild(doc.createTextNode("\"" + content + "\""));
+            break;
+          default:
+            currentLineDiv.appendChild(doc.createTextNode(content));
+            break;
+        }
+        
+      }
+      else
+      {
+        currentLineDiv.appendChild(doc.createTextNode(token));
+      }
     }
     isStartOfLine = false;
   }
+
 }

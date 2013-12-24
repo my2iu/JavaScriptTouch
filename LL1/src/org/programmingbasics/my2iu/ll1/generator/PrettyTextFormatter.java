@@ -50,4 +50,15 @@ public class PrettyTextFormatter implements PrettyFormatter
     program += " " + token;
     isStartOfLine = false;
   }
+  
+  public void insertToken(String token, String content)
+  {
+    if (isStartOfLine)
+    {
+      for (int n = 0; n < indentation; n++)
+        program += "  ";
+    }
+    program += " " + (content != null ? content : token);
+    isStartOfLine = false;
+  }
 }

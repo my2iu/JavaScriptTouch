@@ -91,23 +91,53 @@ public class LLParser
 
   public void automatchTerminals()
   {
-    // Remove terminals from top of stack
-    while (isTerminal(parsingStack.get(parsingStack.size()-1)))
+    String terminalAtTop = topTerminal();
+    while (terminalAtTop != null)
     {
-      String topOfStack = parsingStack.get(parsingStack.size()-1); 
-      parsingStack.remove(parsingStack.size()-1);
-  
-      if (Production.isPrettyPrintToken(topOfStack)) 
-      {
-        formatter.handlePrettyPrint(topOfStack);
-        continue;
-      }
+      if (Production.isPrettyPrintToken(terminalAtTop)) 
+        formatter.handlePrettyPrint(terminalAtTop);
+      else 
+        // Otherwise, remove any terminals and insert it into the stream.
+        formatter.insertToken(terminalAtTop);
       
-      // Otherwise, remove any terminals and insert it into the stream.
-      formatter.insertToken(topOfStack);
+      terminalAtTop = topTerminal();
     }
   }
 
+  public String nextRealTerminal()
+  {
+    String terminalAtTop = topTerminal();
+    while (terminalAtTop != null)
+    {
+      if (Production.isPrettyPrintToken(terminalAtTop)) 
+        formatter.handlePrettyPrint(terminalAtTop);
+      else 
+      {
+        // Otherwise, remove any terminals and insert it into the stream.
+        return terminalAtTop;
+      }
+      
+      terminalAtTop = topTerminal();
+    }
+    return null;
+  }
+
+  
+  /**
+   * @return terminal at top of stack or null if only a non-terminal is there
+   */
+  public String topTerminal()
+  {
+    // Remove terminals from top of stack
+    if (isTerminal(parsingStack.get(parsingStack.size()-1)))
+    {
+      String topOfStack = parsingStack.get(parsingStack.size()-1); 
+      parsingStack.remove(parsingStack.size()-1);
+      return topOfStack;
+    }
+    return null;
+  }
+  
   private boolean speculativeParse(List<String> parsingStack, String token)
   {
     // Copy the stack

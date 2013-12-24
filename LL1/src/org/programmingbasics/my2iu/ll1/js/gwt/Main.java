@@ -13,6 +13,7 @@ import java.util.List;
 import org.programmingbasics.my2iu.ll1.generator.GrammarReader;
 import org.programmingbasics.my2iu.ll1.generator.LL1Generator;
 import org.programmingbasics.my2iu.ll1.generator.LLParser;
+import org.programmingbasics.my2iu.ll1.generator.Production;
 
 import com.google.gwt.core.client.EntryPoint;
 
@@ -24,6 +25,8 @@ import elemental.events.EventListener;
 import elemental.html.AnchorElement;
 import elemental.html.CanvasElement;
 import elemental.html.CanvasRenderingContext2D;
+import elemental.html.FormElement;
+import elemental.html.InputElement;
 import elemental.html.SpanElement;
 import elemental.html.Window;
 
@@ -61,6 +64,52 @@ public class Main implements EntryPoint
     parser.parsingStack.add("Program");
     updateDisplayAndShowOptions();
   }
+
+  /**
+   * 
+   * @param token
+   * @return true if terminal successfully inserted and parsing may proceed
+   *   false if awaiting extra input before insertion of terminal can be completed 
+   */
+  boolean doTerminalInsertion(final String token)
+  {
+    switch (token)
+    {
+      case "Identifier":
+      case "NumericLiteral":
+      case "StringLiteral":
+      case "IdentifierName":
+      case "LabelledStatement":
+        askForTextInput(token);
+        return false;
+      default:
+        programFormatter.insertToken(token);
+        return true;
+    }
+  }
+  
+  void askForTextInput(final String token)
+  {
+    Element choicesPanel = doc.getElementById("choices");
+    choicesPanel.setInnerHTML("");
+    
+    final InputElement textField = doc.createInputElement();
+    textField.setValue("");
+    FormElement form = doc.createFormElement();
+    form.setClassName("textinput");
+    form.appendChild(textField);
+    form.addEventListener("submit", new EventListener() {
+      @Override public void handleEvent(Event evt)
+      {
+        evt.preventDefault();
+        evt.stopPropagation();
+        String text = textField.getValue();
+        programFormatter.insertToken(token, text);
+        updateDisplayAndShowOptions();
+      }}, false);
+    choicesPanel.appendChild(form);
+    textField.focus();
+  }
   
   public void updateDisplayAndShowOptions()
   {
@@ -70,7 +119,21 @@ public class Main implements EntryPoint
     
     if (parser.parsingStack.size() > 0)
     {
-      parser.automatchTerminals();
+      String terminalAtTop = parser.nextRealTerminal();
+      while (terminalAtTop != null)
+      {
+        assert(!Production.isPrettyPrintToken(terminalAtTop)); 
+        // Otherwise, remove any terminals and insert it into the stream.
+        if (!doTerminalInsertion(terminalAtTop))
+        {
+          // Insertion of this terminal is blocking further parsing
+          // because it is asking for additional input.
+          return;
+        }
+        
+        terminalAtTop = parser.nextRealTerminal();
+      }
+      
       programPanel.setInnerHTML("");
       programPanel.appendChild(programFormatter.programDiv);
       
@@ -97,7 +160,7 @@ public class Main implements EntryPoint
       }
     }
   }
-
+  
   public Element createChoiceButton(final String choice)
   {
     Element div = doc.createDivElement();
@@ -121,7 +184,7 @@ public class Main implements EntryPoint
     return anchor;
   }
   
-  public void handleInput(String token)
+  public void handleInput(final String token)
   {
     parser.fullParseToken(token);
     updateDisplayAndShowOptions();

@@ -31,3 +31,12 @@ a.choicebutton div {
 	margin: 5px;
 	
 }
+
+#choices form.textinput input {
+	width: 90%;
+/*	
+	background-color: orange;
+	background-image: linear-gradient(to bottom, orange, orange 50%, grey);
+*/
+	font-size: 24px;
+}
