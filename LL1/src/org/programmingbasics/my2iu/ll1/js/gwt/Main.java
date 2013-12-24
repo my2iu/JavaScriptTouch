@@ -100,6 +100,8 @@ public class Main implements EntryPoint
     
     final InputElement textField = doc.createInputElement();
     textField.setValue("");
+//    if (token.equals("NumericLiteral"))
+//      textField.setType("number");
     FormElement form = doc.createFormElement();
     form.setClassName("textinput");
     form.appendChild(textField);
