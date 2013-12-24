@@ -51,6 +51,8 @@ public class Main implements EntryPoint
     ll1.generateParser();
     parser = ll1.createParser(programFormatter);
 //      parser.runInteractiveBuilder();
+    Element programPanel = doc.getElementById("program");
+    programPanel.appendChild(programFormatter.programDiv);
 
     
     setupParser();
@@ -116,7 +118,6 @@ public class Main implements EntryPoint
   public void updateDisplayAndShowOptions()
   {
     Element choicesPanel = doc.getElementById("choices");
-    Element programPanel = doc.getElementById("program");
     choicesPanel.setInnerHTML("");
     
     if (parser.parsingStack.size() > 0)
@@ -136,8 +137,11 @@ public class Main implements EntryPoint
         terminalAtTop = parser.nextRealTerminal();
       }
       
-      programPanel.setInnerHTML("");
-      programPanel.appendChild(programFormatter.programDiv);
+      // IE11 erased all the elements inside the program panel if you
+      // set innerHTML = '', even if you have pointers to the contained
+      // objects.
+//      programPanel.setInnerHTML("");
+//      programPanel.appendChild(programFormatter.programDiv);
       
       List<String> options = parser.findValidOptions();
       
