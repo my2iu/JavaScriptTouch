@@ -8,7 +8,9 @@ import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.programmingbasics.my2iu.ll1.generator.GrammarReader;
 import org.programmingbasics.my2iu.ll1.generator.LL1Generator;
@@ -165,7 +167,11 @@ public class Main implements EntryPoint
   {
     Element div = doc.createDivElement();
     String buttonText = choice;
-    if (buttonText.length() > 2 && buttonText.startsWith("\"") && buttonText.endsWith("\""))
+    if (renamedTokens.containsKey(buttonText))
+    {
+      buttonText = renamedTokens.get(buttonText);
+    }
+    else if (buttonText.length() > 2 && buttonText.startsWith("\"") && buttonText.endsWith("\""))
     {
       buttonText = buttonText.substring(1, buttonText.length() - 1);
     }
@@ -188,5 +194,14 @@ public class Main implements EntryPoint
   {
     parser.fullParseToken(token);
     updateDisplayAndShowOptions();
+  }
+  
+  static Map<String, String> renamedTokens = new HashMap<>();
+  static {
+    renamedTokens.put("Identifier", "$...");
+    renamedTokens.put("StringLiteral", "\"...\"");
+    renamedTokens.put("NumericLiteral", "0.0");
+    renamedTokens.put("RegularExpressionLiteral", "/.../");
+    renamedTokens.put("LabelledStatement", "label:");
   }
 }
