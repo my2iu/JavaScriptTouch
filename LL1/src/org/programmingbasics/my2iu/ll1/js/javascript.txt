@@ -155,7 +155,7 @@ ContinueStatement :
 #	continue [no LineTerminator here] Identifier ;
 
 ContinueStatement_Identifier :
-	Identifier ";" <endl>
+	Label ";" <endl>
 	";" <endl>
 
 BreakStatement :
@@ -163,7 +163,7 @@ BreakStatement :
 #	break [no LineTerminator here] Identifier ;
 
 BreakStatement_Identifier :
-	Identifier ";" <endl>
+	Label ";" <endl>
 	";" <endl>
 
 ReturnStatement :
@@ -287,12 +287,12 @@ ObjectLiteral :
 
 ObjectLiteral_More :
 	"}"
-	LLPropertyNameAndValueList "}"
+	<endl> <tab> LLPropertyNameAndValueList <endl> <untab> "}"
 #	PropertyNameAndValueList ObjectLiteral_PropertyListAfter 
 
-ObjectLiteral_PropertyListAfter :
-	"}"
-	"," "}"
+#ObjectLiteral_PropertyListAfter :
+#	"}"
+#	"," "}"
 
 # Special way to denote object literal list so that it accepts the 
 # comma at the end
@@ -300,7 +300,7 @@ LLPropertyNameAndValueList :
 	PropertyAssignment LLPropertyNameAndValueList_More
 
 LLPropertyNameAndValueList_More :
-	"," LLPropertyNameAndValueList_PropertyOrEnd
+	"," <endl> LLPropertyNameAndValueList_PropertyOrEnd
 	EPSILON
 
 LLPropertyNameAndValueList_PropertyOrEnd :
@@ -311,13 +311,13 @@ PropertyNameAndValueList :
 	PropertyAssignment PropertyNameAndValueList_More
 
 PropertyNameAndValueList_More :
-	"," PropertyAssignment PropertyNameAndValueList_More
+	"," <endl> PropertyAssignment PropertyNameAndValueList_More
 	EPSILON
 
 PropertyAssignment :
 	PropertyName ":" AssignmentExpression
-	"get" PropertyName "(" ")" "{" FunctionBody "}"
-	"set" PropertyName "(" PropertySetParameterList ")" "{" FunctionBody "}"
+	"get" PropertyName "(" ")" "{" <endl> <tab> FunctionBody <untab> "}"
+	"set" PropertyName "(" PropertySetParameterList ")" "{" <endl> <tab> FunctionBody <untab> "}"
 
 PropertyName :
 	IdentifierName

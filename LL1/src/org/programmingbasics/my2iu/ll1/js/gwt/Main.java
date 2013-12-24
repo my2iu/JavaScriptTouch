@@ -84,6 +84,7 @@ public class Main implements EntryPoint
       case "StringLiteral":
       case "IdentifierName":
       case "LabelledStatement":
+      case "Label":
         askForTextInput(token);
         return false;
       default:
@@ -155,8 +156,11 @@ public class Main implements EntryPoint
           @Override
           public int compare(String o1, String o2)
           {
-            return Integer.compare(ChoiceOrdering.TERMINAL_ORDER.get(o1), 
-                ChoiceOrdering.TERMINAL_ORDER.get(o2));
+            int choice1 = ChoiceOrdering.TERMINAL_ORDER.containsKey(o1)
+                ? ChoiceOrdering.TERMINAL_ORDER.get(o1) : Integer.MAX_VALUE;
+            int choice2 = ChoiceOrdering.TERMINAL_ORDER.containsKey(o2)
+                ? ChoiceOrdering.TERMINAL_ORDER.get(o2) : Integer.MAX_VALUE;
+            return Integer.compare(choice1, choice2);
           }});
         for (final String choice: options)
         {
@@ -203,6 +207,7 @@ public class Main implements EntryPoint
   static Map<String, String> renamedTokens = new HashMap<>();
   static {
     renamedTokens.put("Identifier", "$...");
+    renamedTokens.put("IdentifierName", "Property");
     renamedTokens.put("StringLiteral", "\"...\"");
     renamedTokens.put("NumericLiteral", "0.0");
     renamedTokens.put("RegularExpressionLiteral", "/.../");

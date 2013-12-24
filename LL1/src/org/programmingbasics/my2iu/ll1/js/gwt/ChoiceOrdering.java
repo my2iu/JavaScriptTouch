@@ -48,7 +48,7 @@ public class ChoiceOrdering
 
     "\"get\"", "\"set\"", "RegularExpressionLiteral",  
     
-    "\"debugger\"", "LabelledStatement", "\"with\"", 
+    "LabelledStatement", "Label", "\"debugger\"", "\"with\"", 
   };
   
   public final static Map<String, Integer> TERMINAL_ORDER = new HashMap<String, Integer>();
