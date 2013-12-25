@@ -89,7 +89,7 @@ public class PrettyHtmlFormatter implements PrettyFormatter
             currentLineDiv.appendChild(doc.createTextNode("$" + content));
             break;
           case "StringLiteral":
-            currentLineDiv.appendChild(doc.createTextNode("\"" + content + "\""));
+            currentLineDiv.appendChild(doc.createTextNode("'" + content + "'"));
             break;
           case "LabelledStatement":
             currentLineDiv.appendChild(doc.createTextNode(content + ":"));

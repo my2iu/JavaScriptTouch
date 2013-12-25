@@ -20,6 +20,7 @@ import org.programmingbasics.my2iu.ll1.generator.Production;
 import com.google.gwt.core.client.EntryPoint;
 
 import elemental.client.Browser;
+import elemental.css.CSSStyleDeclaration.Unit;
 import elemental.dom.Document;
 import elemental.dom.Element;
 import elemental.events.Event;
@@ -53,6 +54,15 @@ public class Main implements EntryPoint
 //      parser.runInteractiveBuilder();
     Element programPanel = doc.getElementById("program");
     programPanel.appendChild(programFormatter.programDiv);
+
+    Element flexbox = doc.getElementById("mainbox");
+    flexbox.getStyle().setHeight(Browser.getWindow().getInnerHeight(), Unit.PX);
+    Browser.getWindow().addEventListener(Event.RESIZE, new EventListener() {
+      @Override public void handleEvent(Event evt)
+      {
+        Element flexbox = doc.getElementById("mainbox");
+        flexbox.getStyle().setHeight(Browser.getWindow().getInnerHeight(), Unit.PX);
+      }}, false);
 
     
     setupParser();
@@ -105,7 +115,7 @@ public class Main implements EntryPoint
     FormElement form = doc.createFormElement();
     form.setClassName("textinput");
     form.appendChild(textField);
-    form.addEventListener("submit", new EventListener() {
+    form.addEventListener(Event.SUBMIT, new EventListener() {
       @Override public void handleEvent(Event evt)
       {
         evt.preventDefault();
@@ -190,7 +200,7 @@ public class Main implements EntryPoint
     anchor.setHref("#");
     anchor.appendChild(div);
     anchor.setClassName("choicebutton");
-    anchor.addEventListener("click", new EventListener() {
+    anchor.addEventListener(Event.CLICK, new EventListener() {
       @Override public void handleEvent(Event evt)
       {
         evt.preventDefault();
@@ -210,7 +220,7 @@ public class Main implements EntryPoint
   static {
     renamedTokens.put("Identifier", "$...");
     renamedTokens.put("IdentifierName", "Property");
-    renamedTokens.put("StringLiteral", "\"...\"");
+    renamedTokens.put("StringLiteral", "'...'");
     renamedTokens.put("NumericLiteral", "0.0");
     renamedTokens.put("RegularExpressionLiteral", "/.../");
     renamedTokens.put("LabelledStatement", "label:");

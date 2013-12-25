@@ -1,14 +1,30 @@
 
+#mainbox {
+	display: -webkit-box;
+	display: box;
+	-webkit-box-orient: vertical;
+	box-orient: vertical;
+	-webkit-box-align: stretch;
+	box-align: stretch;
+	height: 600px;
+/*	height: 600px; */
+}
 
 #program {
-	height: 300px;	
+	-webkit-box-flex: 1;
+	box-flex: 1;
+	height: 0px;
+/*	height: 300px; */	
 	border: 1px solid black;
 	overflow: scroll;
 	padding: 5px;
 }
 
 #choices {
-	height: 300px;
+	-webkit-box-flex: 1;
+	box-flex: 1;
+	height: 0px;
+/*	height: 300px; */
 	border: 1px solid black;
 	font-size: 24px;
 /*
