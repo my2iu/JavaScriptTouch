@@ -110,11 +110,20 @@ public class Main implements EntryPoint
     
     final InputElement textField = doc.createInputElement();
     textField.setValue("");
-//    if (token.equals("NumericLiteral"))
+    if (token.equals("NumericLiteral"))
+    {
+// Android doesn't really handle auto-submit properly on number fields      
 //      textField.setType("number");
+//      textField.setStep("any");
+    }
+//    final InputElement dummySubmit = doc.createInputElement();
+//    dummySubmit.setType("submit");
+//    dummySubmit.setValue("submit");
+//    dummySubmit.getStyle().setVisibility("hidden");
     FormElement form = doc.createFormElement();
     form.setClassName("textinput");
     form.appendChild(textField);
+//    form.appendChild(dummySubmit);
     form.addEventListener(Event.SUBMIT, new EventListener() {
       @Override public void handleEvent(Event evt)
       {

@@ -8,10 +8,13 @@ FunctionExpression :
 	"function" FunctionExpression_IdentifierOption
 
 FunctionExpression_IdentifierOption :
-	Identifier? "(" FunctionExpression_ParametersOption
+	Identifier? "(" FunctionExpression_ParametersOptionNoEndl
 
 FunctionExpression_ParametersOption :
 	FormalParameterList? ")" "{" <endl> <tab> FunctionBody <untab> "}" <endl> 
+
+FunctionExpression_ParametersOptionNoEndl :
+	FormalParameterList? ")" "{" <endl> <tab> FunctionBody <untab> "}" 
 	
 FormalParameterList :
 	Identifier FunctionParameterList_More
@@ -250,10 +253,10 @@ PrimaryExpression :
 	"(" Expression ")"
 
 ArrayLiteral :
-	"[" ArrayLiteral_More
+	"[" <tab> ArrayLiteral_More
 
 ArrayLiteral_More :
-	LLElementList "]"
+	LLElementList <untab> "]"
 
 # Custom handling of element lists and elision for Array Literals
 LLElementList :

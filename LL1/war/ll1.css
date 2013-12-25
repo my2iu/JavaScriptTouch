@@ -1,3 +1,7 @@
+body {
+	padding: 0px;
+	margin: 0px;
+}
 
 #mainbox {
 	display: -webkit-box;
@@ -17,7 +21,8 @@
 /*	height: 300px; */	
 	border: 1px solid black;
 	overflow: scroll;
-	padding: 5px;
+	padding: 10px;
+	font-size: 20px;
 }
 
 #choices {
@@ -27,6 +32,8 @@
 /*	height: 300px; */
 	border: 1px solid black;
 	font-size: 24px;
+	padding: 10px;
+	overflow: auto;
 /*
 	line-height: 36px;
 	font-size: 20px;

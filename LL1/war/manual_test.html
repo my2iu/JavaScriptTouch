@@ -1,0 +1,22 @@
+<html>
+<body>
+<input id="field">
+<input id="submit" type="submit" value="submit">
+
+<script>
+function fibonacci(val)
+{
+	if (val < 3) {
+		return 1;
+	}
+	return fibonacci(val - 1) + fibonacci (val - 2);
+}
+var submit = document.getElementById("submit");
+var field = document.getElementById("field");
+submit.onclick = function() {
+	alert(fibonacci(field.value));
+};
+</script>
+
+</body>
+</html>
